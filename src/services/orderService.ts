@@ -88,6 +88,8 @@ export const OrderService = {
    * Admin: Subscribe to all orders.
    */
   subscribeToAllOrders(callback: (orders: Order[]) => void) {
+    if (!auth.currentUser) return () => {};
+
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
     return onSnapshot(q, (snapshot) => {
       const orders = snapshot.docs.map(doc => ({

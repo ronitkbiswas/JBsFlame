@@ -73,11 +73,13 @@ export default function Admin() {
   };
 
   useEffect(() => {
+    if (!auth.currentUser) return;
     const unsubMenu = MenuService.subscribeToMenu(setMenuItems);
     return () => unsubMenu();
-  }, []);
+  }, [auth.currentUser]);
 
   useEffect(() => {
+    if (!auth.currentUser) return;
     const unsub = OrderService.subscribeToAllOrders((allOrders) => {
       setOrders(allOrders);
 
@@ -95,7 +97,7 @@ export default function Admin() {
     });
 
     return () => unsub();
-  }, [view, orders.length]);
+  }, [view, orders.length, auth.currentUser]);
 
   // Reset notification when viewing orders
   useEffect(() => {

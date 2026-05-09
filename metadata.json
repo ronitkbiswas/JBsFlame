@@ -1,6 +1,6 @@
 {
   "name": "JB's Flame",
   "description": "A premium, mobile-optimized food ordering app for JB's Flame restaurant, featuring real-time tracking, Google Maps location integration, and a Zomato-inspired UI.",
-  "requestFramePermissions": ["geolocation"],
+  "requestFramePermissions": ["geolocation", "notifications"],
   "majorCapabilities": []
 }

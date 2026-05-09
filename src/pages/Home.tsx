@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 // Tracking Path Added
-import { Search, MapPin, History, User, LogOut, Plus, Minus, Star, ArrowRight, X, LayoutDashboard, Bike, Timer, Package, CheckCircle2, AlertCircle, Navigation, Phone, Store, ChefHat, Soup, Check, Settings, ClipboardList, UserCircle, ChevronDown, Zap, XCircle } from 'lucide-react';
+import { Search, MapPin, History, User, LogOut, Plus, Minus, Star, ArrowRight, X, LayoutDashboard, Bike, Timer, Package, CheckCircle2, AlertCircle, Navigation, Phone, Store, ChefHat, Soup, Check, Settings, ClipboardList, UserCircle, ChevronDown, Zap, XCircle, BellRing } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MenuItem, CartItem, UserProfile } from '../types';
 import { MenuService } from '../services/menuService';
@@ -97,6 +97,9 @@ export default function Home() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [restaurantLocation, setRestaurantLocation] = useState(DEFAULT_RESTAURANT_LOCATION);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    typeof Notification !== 'undefined' ? Notification.permission : 'granted'
+  );
 
   const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
@@ -105,6 +108,27 @@ export default function Home() {
   const [showOrderSuccess, setShowOrderSuccess] = useState(false);
   const [isMyProfileOpen, setIsMyProfileOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof Notification !== 'undefined') {
+      const checkPermission = () => {
+        setNotificationPermission(Notification.permission);
+      };
+      checkPermission();
+      window.addEventListener('focus', checkPermission);
+      return () => window.removeEventListener('focus', checkPermission);
+    }
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if (typeof Notification === 'undefined') return;
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+    }
+  };
 
   useEffect(() => {
     seedMenu();
@@ -685,6 +709,11 @@ useEffect(() => {
         deliveryAddress={location.label}
         hasActiveOrder={orders.some(o => !['Delivered', 'Cancelled', 'Rejected'].includes(o.status))}
         onCheckout={async () => {
+            if (!user) {
+              login();
+              return;
+            }
+
             const activeOrder = orders.find(o => 
               !['Delivered', 'Cancelled', 'Rejected'].includes(o.status)
             );
@@ -1403,6 +1432,51 @@ useEffect(() => {
               </div>
             </motion.div>
           </div>
+        )}
+
+        {notificationPermission !== 'granted' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white rounded-[32px] max-w-sm w-full p-8 text-center shadow-2xl"
+            >
+              <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-6 relative">
+                <BellRing className="w-10 h-10 animate-bounce" />
+                <div className="absolute top-0 right-0 w-6 h-6 bg-rose-500 rounded-full border-4 border-white" />
+              </div>
+              <h2 className="text-2xl font-black text-gray-900 mb-3">Stay Updated!</h2>
+              <p className="text-gray-600 mb-8 leading-relaxed">
+                We need your permission to send you <span className="text-rose-600 font-bold">real-time updates</span> about your order. 
+                <span className="block mt-3 text-sm bg-gray-50 p-3 rounded-xl border border-gray-100 italic">
+                  "If you don't allow notifications, you won't receive live tracking for your food."
+                </span>
+              </p>
+              
+              {notificationPermission === 'denied' ? (
+                <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 text-sm text-amber-800 mb-6 text-left">
+                  <div className="flex items-center gap-2 mb-1 font-bold">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Permission Denied</span>
+                  </div>
+                  <p>Please go to your browser settings for this site and <span className="font-bold underline">Allow Notifications</span> manually to proceed.</p>
+                </div>
+              ) : (
+                <button
+                  onClick={requestNotificationPermission}
+                  className="w-full bg-rose-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-rose-200 active:scale-95 transition-all hover:bg-rose-700"
+                >
+                  Allow Notifications
+                </button>
+              )}
+              
+              <p className="mt-6 text-[10px] text-gray-400 uppercase tracking-widest font-bold"> Required for real-time tracking </p>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

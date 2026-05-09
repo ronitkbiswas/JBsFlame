@@ -3,6 +3,7 @@ import { ShoppingBag, ChevronUp, ChevronRight, Minus, Plus, Trash2, AlertCircle,
 import { motion, AnimatePresence } from 'motion/react';
 import { CartItem } from '../types';
 import { formatPrice, cn } from '../lib/utils';
+import { auth } from '../lib/firebase';
 
 interface CartViewProps {
   items: CartItem[];
@@ -226,7 +227,11 @@ export default function CartView({ items, onUpdateQuantity, onCheckout, onClearC
                       : "bg-emerald-600 text-white shadow-emerald-200 focus:ring-4 focus:ring-emerald-200"
                   )}
                 >
-                  {hasActiveOrder ? 'Active Order in Progress' : `Place Order • ${formatPrice(total)}`}
+                  {hasActiveOrder 
+                    ? 'Active Order in Progress' 
+                    : auth.currentUser 
+                      ? `Place Order • ${formatPrice(total)}` 
+                      : 'Login & Place Order now'}
                 </button>
                 {hasActiveOrder && (
                   <p className="text-[10px] text-center mt-3 text-gray-400 font-bold uppercase tracking-tight">

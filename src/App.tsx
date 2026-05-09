@@ -12,11 +12,10 @@ export default function App() {
   useEffect(() => {
     return auth.onAuthStateChanged(async (user) => {
       if (user) {
-        // Special check for bootstrap admin or checking role
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const isAdminUser = userDoc.exists() && userDoc.data().role === 'admin';
-        const isBootstrapAdmin = user.email === 'ronitkbiswas@gmail.com';
-        setIsAdmin(isAdminUser || isBootstrapAdmin);
+        // Special check for bootstrap admin
+        const adminEmail = 'ronitkbiswas@gmail.com';
+        const isEmailAdmin = user.email === adminEmail;
+        setIsAdmin(isEmailAdmin);
       } else {
         setIsAdmin(false);
       }
@@ -27,7 +26,7 @@ export default function App() {
   // Simple routing: if URL has ?admin=true or user is admin, show admin panel
   // For demo purposes, we'll allow toggling or checking simple query param
   const urlParams = new URLSearchParams(window.location.search);
-  const showAdmin = urlParams.get('admin') === 'true' || isAdmin;
+  const showAdmin = isAdmin;
 
   if (loading) {
     return (

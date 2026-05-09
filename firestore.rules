@@ -16,12 +16,12 @@ service cloud.firestore {
     function existing() { return resource.data; }
     function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
     
+    function isEmailAdmin() {
+      return isSignedIn() && request.auth.token.email == 'ronitkbiswas@gmail.com';
+    }
+
     function isAdmin() { 
-      return isSignedIn() && (
-        request.auth.token.email in ['ronitkbiswas@gmail.com', 'ronitkbiswas.work@gmail.com', 'jbsflameofficial@gmail.com'] ||
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
-      );
+      return isEmailAdmin();
     }
     
     // --- Match Blocks ---
@@ -32,25 +32,30 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      allow get, update, delete: if isSignedIn() && (request.auth.uid == uid || isAdmin());
-      allow list: if isAdmin();
+      allow get, update, delete: if isSignedIn() && (request.auth.uid == uid || isEmailAdmin() || isAdmin());
+      allow list: if isEmailAdmin() || isAdmin();
       allow create: if isSignedIn() && request.auth.uid == uid;
 
       match /{allSubcollections=**} {
-        allow read, write: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+        allow read, write: if isSignedIn() && (request.auth.uid == uid || isEmailAdmin() || isAdmin());
       }
     }
 
     match /menu_items/{itemId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isEmailAdmin() || isAdmin();
     }
 
     match /orders/{orderId} {
-      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isEmailAdmin() || isAdmin());
+      allow list: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid) || 
+        isEmailAdmin() || 
+        isAdmin()
+      );
       allow create: if isSignedIn() && incoming().userId == request.auth.uid;
       allow update: if isSignedIn() && (
+        isEmailAdmin() || 
         isAdmin() || 
         (resource.data.userId == request.auth.uid && incoming().status == 'Cancelled' && resource.data.status == 'Pending') ||
         (resource.data.userId == request.auth.uid && incoming().get('cancellationRequested', false) == true)
