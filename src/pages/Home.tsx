@@ -1129,7 +1129,7 @@ useEffect(() => {
                      {currentTrackingOrder.status === 'Pending' ? 'Order Placed' : 
                       currentTrackingOrder.status === 'Accepted' ? 'Confirmed' :
                       currentTrackingOrder.status === 'Preparing' ? 'In Kitchen' :
-                      currentTrackingOrder.status === 'Out for Delivery' ? 'On the Way' : 
+                      currentTrackingOrder.status === 'Out for Delivery' ? 'Out for delivery' : 
                       currentTrackingOrder.status === 'Delivered' ? 'Delivered' :
                       currentTrackingOrder.status === 'Cancelled' ? 'Cancelled' :
                       currentTrackingOrder.status === 'Rejected' ? 'Rejected' : currentTrackingOrder.status}
@@ -1172,6 +1172,18 @@ useEffect(() => {
                         <p className="text-sm font-black text-emerald-600">{distanceToRestaurant.toFixed(1)} km</p>
                       </div>
                     </div>
+                  )}
+
+                  {currentTrackingOrder.status === 'Out for Delivery' && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-emerald-50/50 border border-emerald-100/50 rounded-2xl p-4 text-left"
+                    >
+                      <p className="text-xs font-bold text-emerald-700 leading-relaxed">
+                        Our delivery partner is on the way and will call you after reaching your location. Keep your phone nearby.
+                      </p>
+                    </motion.div>
                   )}
 
                  <div className="bg-gray-50 rounded-2xl p-4 text-left space-y-2">
@@ -1395,7 +1407,7 @@ function MapBoundsAdjuster({ pos1, pos2 }: { pos1: { lat: number; lng: number },
     const bounds = new google.maps.LatLngBounds();
     bounds.extend(pos1);
     bounds.extend(pos2);
-    map.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
+    map.fitBounds(bounds, { top: 15, bottom: 15, left: 15, right: 15 });
   }, [map, pos1.lat, pos1.lng, pos2.lat, pos2.lng]);
 
   return null;

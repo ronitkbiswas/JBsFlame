@@ -48,19 +48,8 @@ export default function CartView({ items, onUpdateQuantity, onCheckout, onClearC
               <p className="font-bold">{formatPrice(subtotal)}</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div 
-              className="p-2 hover:bg-white/10 rounded-xl transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowClearConfirm(true);
-              }}
-            >
-              <Trash2 className="w-5 h-5 text-emerald-100" />
-            </div>
-            <div className="flex items-center gap-1 font-bold">
-              VIEW CART <ChevronRight className="w-5 h-5" />
-            </div>
+          <div className="flex items-center gap-1 font-bold">
+            VIEW CART <ChevronRight className="w-5 h-5" />
           </div>
         </motion.div>
       </div>
