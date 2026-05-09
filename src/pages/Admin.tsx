@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, LayoutDashboard, UtensilsCrossed, ClipboardList, Camera, X, Loader2, CheckCircle2, Clock, Truck, LogOut, ExternalLink, AlertCircle, Phone, MapPin, Navigation } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { APIProvider, Map as GoogleMap, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
-import { MenuItem, Order, OrderStatus } from '../types';
+import { MenuItem, Order, OrderStatus, UserProfile } from '../types';
 import { MenuService } from '../services/menuService';
 import { OrderService } from '../services/orderService';
 import { SettingsService, RestaurantLocation } from '../services/settingsService';
@@ -11,7 +11,7 @@ import { db, auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { collection, onSnapshot, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 
-export default function Admin() {
+export default function Admin({ userProfile }: { userProfile: UserProfile | null }) {
   const [view, setView] = useState<'menu' | 'orders' | 'settings'>('menu');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'New Orders'>('New Orders');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -97,7 +97,7 @@ export default function Admin() {
     });
 
     return () => unsub();
-  }, [view, orders.length, auth.currentUser]);
+  }, [auth.currentUser]);
 
   // Reset notification when viewing orders
   useEffect(() => {

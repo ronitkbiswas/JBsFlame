@@ -2,30 +2,53 @@ import React, { useState, useEffect } from 'react';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
 import { auth, db } from './lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import NotificationManager from './components/NotificationManager';
+import { UserProfile } from './types';
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    return auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        // Special check for bootstrap admin
+    return auth.onAuthStateChanged(async (u) => {
+      if (u) {
+        // Fetch profile
+        try {
+          const userDoc = await getDoc(doc(db, 'users', u.uid));
+          if (userDoc.exists()) {
+            setUserProfile(userDoc.data() as UserProfile);
+          } else {
+            const newProfile: UserProfile = {
+              uid: u.uid,
+              email: u.email || '',
+              displayName: u.displayName || 'Guest User',
+              role: 'customer',
+              createdAt: new Date()
+            };
+            await setDoc(doc(db, 'users', u.uid), newProfile);
+            setUserProfile(newProfile);
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+
         const adminEmail = 'ronitkbiswas@gmail.com';
-        const isEmailAdmin = user.email === adminEmail;
+        const isEmailAdmin = u.email === adminEmail;
         setIsAdmin(isEmailAdmin);
+
+        if (isEmailAdmin) {
+          import('./lib/seed').then(({ seedMenu }) => seedMenu());
+        }
       } else {
+        setUserProfile(null);
         setIsAdmin(false);
       }
       setLoading(false);
     });
   }, []);
 
-  // Simple routing: if URL has ?admin=true or user is admin, show admin panel
-  // For demo purposes, we'll allow toggling or checking simple query param
-  const urlParams = new URLSearchParams(window.location.search);
   const showAdmin = isAdmin;
 
   if (loading) {
@@ -39,8 +62,8 @@ export default function App() {
 
   return (
     <>
-      <NotificationManager isAdmin={isAdmin} />
-      {showAdmin ? <Admin /> : <Home />}
+      <NotificationManager isAdmin={isAdmin} user={auth.currentUser} />
+      {showAdmin ? <Admin userProfile={userProfile} /> : <Home userProfile={userProfile} />}
     </>
   );
 }

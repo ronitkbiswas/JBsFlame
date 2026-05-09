@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 // Tracking Path Added
-import { Search, MapPin, History, User, LogOut, Plus, Minus, Star, ArrowRight, X, LayoutDashboard, Bike, Timer, Package, CheckCircle2, AlertCircle, Navigation, Phone, Store, ChefHat, Soup, Check, Settings, ClipboardList, UserCircle, ChevronDown, Zap, XCircle, BellRing } from 'lucide-react';
+import { Search, MapPin, History, User, LogOut, Plus, Minus, Star, ArrowRight, X, LayoutDashboard, Bike, Timer, Package, CheckCircle2, AlertCircle, Navigation, Phone, Store, ChefHat, Soup, Check, Settings, ClipboardList, UserCircle, ChevronDown, Zap, XCircle, BellRing, Info, CloudRain, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MenuItem, CartItem, UserProfile } from '../types';
 import { MenuService } from '../services/menuService';
@@ -10,8 +10,7 @@ import LocationPicker from '../components/LocationPicker';
 import { APIProvider, Map as GoogleMap, useMap, AdvancedMarker, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { auth, db } from '../lib/firebase';
 import { signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { seedMenu } from '../lib/seed';
+import { doc } from 'firebase/firestore';
 import { OrderService } from '../services/orderService';
 import { AddressService } from '../services/addressService';
 import { UserService } from '../services/userService';
@@ -75,7 +74,7 @@ const API_KEY =
   process.env.GOOGLE_MAPS_API_KEY ||
   '';
 
-export default function Home() {
+export default function Home({ userProfile }: { userProfile: UserProfile | null }) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const clearCart = () => setCart([]);
@@ -90,13 +89,17 @@ export default function Home() {
     receiverPhone?: string;
   }>({ lat: 22.5726, lng: 88.3639, label: 'Kolkata, West Bengal' });
   const [hasUserDetectedLocation, setHasUserDetectedLocation] = useState(false);
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(userProfile);
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [restaurantLocation, setRestaurantLocation] = useState(DEFAULT_RESTAURANT_LOCATION);
+
+  useEffect(() => {
+    setUser(userProfile);
+  }, [userProfile]);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'granted'
   );
@@ -131,8 +134,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    seedMenu();
-    
     // Fetch dynamic restaurant location
     SettingsService.getRestaurantLocation()
       .then(loc => {
@@ -159,57 +160,36 @@ export default function Home() {
   }, [user]);
 
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (firebaseUser) => {
-      try {
-        if (firebaseUser) {
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          if (userDoc.exists()) {
-            setUser(userDoc.data() as UserProfile);
-        } else {
-          const newProfile: UserProfile = {
-            uid: firebaseUser.uid,
-            email: firebaseUser.email || '',
-            displayName: firebaseUser.displayName || 'Guest User',
-            role: 'customer',
-            createdAt: new Date()
-          };
-          await setDoc(doc(db, 'users', firebaseUser.uid), newProfile);
-          setUser(newProfile);
+    // Redundant auth listener removed to save quota
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      // Cleanup duplicates only once per login
+      const cleanupKey = `cleanup_${user.uid}`;
+      if (!sessionStorage.getItem(cleanupKey)) {
+        AddressService.cleanupDuplicates().catch(console.error);
+        sessionStorage.setItem(cleanupKey, 'true');
+      }
+
+      const unsub = AddressService.subscribeToAddresses((addresses) => {
+        setSavedAddresses(addresses);
+        if (addresses.length > 0 && !hasUserDetectedLocation) {
+          const defaultAddr = addresses.find(a => a.isDefault) || addresses[0];
+          setLocation({ 
+            lat: defaultAddr.lat, 
+            lng: defaultAddr.lng, 
+            label: defaultAddr.label,
+            addressDetails: defaultAddr.addressDetails,
+            receiverName: defaultAddr.receiverName,
+            receiverPhone: defaultAddr.receiverPhone
+          });
+          setHasUserDetectedLocation(true);
         }
-      } else {
-        setUser(null);
-        setSavedAddresses([]);
-      }
-    } catch (error) {
-      console.error('Error in onAuthStateChanged:', error);
+      });
+      return () => unsub();
     }
-  });
-  return () => unsub();
-}, []);
-
-useEffect(() => {
-  if (user) {
-    // Cleanup duplicates on login
-    AddressService.cleanupDuplicates().catch(console.error);
-
-    const unsub = AddressService.subscribeToAddresses((addresses) => {
-      setSavedAddresses(addresses);
-      if (addresses.length > 0 && !hasUserDetectedLocation) {
-        const defaultAddr = addresses.find(a => a.isDefault) || addresses[0];
-        setLocation({ 
-          lat: defaultAddr.lat, 
-          lng: defaultAddr.lng, 
-          label: defaultAddr.label,
-          addressDetails: defaultAddr.addressDetails,
-          receiverName: defaultAddr.receiverName,
-          receiverPhone: defaultAddr.receiverPhone
-        });
-        setHasUserDetectedLocation(true);
-      }
-    });
-    return () => unsub();
-  }
-}, [user, hasUserDetectedLocation]);
+  }, [user]);
 
   const addToCart = (item: MenuItem) => {
     setCart(prev => {
@@ -365,21 +345,22 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* Header */}
-      <header className="bg-white px-4 pt-6 pb-4 sticky top-0 z-30 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
+      {/* Header - Sticky Top Bar Only */}
+      <header className="bg-white px-4 pt-6 pb-2 sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex flex-col cursor-pointer" onClick={() => setIsLocationOpen(true)}>
-            <h1 className="text-xl font-black text-gray-900 tracking-tight leading-none mb-1 flex items-center gap-1.5">
+            <h1 className="text-lg font-black text-gray-900 tracking-tight leading-none mb-0.5 flex items-center gap-1.5">
               <Zap className="w-5 h-5 fill-emerald-500 text-emerald-500" />
               <span>Delivery in <span className="text-emerald-600">{headerDeliveryTime} mins</span></span>
             </h1>
             <div className="flex items-center gap-1">
-              <p className="text-sm font-medium text-gray-600 truncate max-w-[220px]">
+              <p className="text-xs font-medium text-gray-500 truncate max-w-[200px]">
                 {location.label}
               </p>
-              <ChevronDown className="w-4 h-4 text-gray-900" />
+              <ChevronDown className="w-3 h-3 text-gray-900" />
             </div>
           </div>
+          
           <div className="flex items-center gap-3">
              {user ? (
                <div className="flex items-center gap-3">
@@ -407,7 +388,7 @@ useEffect(() => {
                               <p className="text-sm font-bold text-gray-900 truncate">{user.displayName}</p>
                             </div>
                             <div className="p-2">
-                              {user.role === 'admin' && (
+                              {user.email === 'ronitkbiswas@gmail.com' && (
                                 <button 
                                   onClick={() => {
                                     window.location.href = '/?admin=true';
@@ -481,42 +462,111 @@ useEffect(() => {
              )}
           </div>
         </div>
+      </header>
+
+      {/* Main Content (Scrolling) */}
+      <div className="px-4 pb-4">
+        {/* Restaurant Info Section - Premium Compact Card */}
+        <div className="mt-4 mb-4 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-4 pt-3 pb-3">
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-2xl font-black text-[#1E293B] tracking-tight">JB's Flame</h2>
+                <div className="p-0.5 hover:bg-gray-100 rounded-full cursor-pointer transition-colors">
+                  <Info className="w-4 h-4 text-gray-900 stroke-[2.5]" />
+                </div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="flex items-center gap-1 bg-[#1A8D49] text-white px-2 py-0.5 rounded-lg font-black text-[13px]">
+                  <Star className="w-4 h-4 fill-white text-white" />
+                  <span>4.4</span>
+                </div>
+                <span className="text-[11px] font-bold text-gray-400 border-b border-gray-300 border-dotted pb-0.5 mt-0.5">By 2.9k+</span>
+              </div>
+            </div>
+
+            <div className="space-y-1 mb-3">
+              <div className="flex items-center gap-2 text-[14px] font-bold text-gray-600">
+                <MapPin className="w-4 h-4 text-gray-500" />
+                <span>2.3 km • New Town</span>
+              </div>
+              <div className="flex items-center gap-2 text-[14px] font-bold text-gray-600">
+                <CloudRain className="w-4 h-4 text-gray-500" />
+                <div className="flex items-center gap-1">
+                  <span>40-45 mins • Schedule for later</span>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
+               <div className="flex-shrink-0 inline-flex bg-[#F3F7FB] px-3 py-1.5 rounded-xl items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                  <span className="text-[13px] font-bold text-gray-700 whitespace-nowrap">No packaging charges</span>
+               </div>
+               <div className="flex-shrink-0 inline-flex bg-[#F3F7FB] px-3 py-1.5 rounded-xl items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                  <span className="text-[13px] font-bold text-gray-700 whitespace-nowrap">Last 100 orders without complain</span>
+               </div>
+               <div className="flex-shrink-0 inline-flex bg-[#F3F7FB] px-3 py-1.5 rounded-xl items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                  <span className="text-[13px] font-bold text-gray-700 whitespace-nowrap">Frequently reordered</span>
+               </div>
+            </div>
+          </div>
+
+          <div className="mx-4 h-[1px] bg-gray-100" />
+
+          <div className="px-4 py-2.5 flex items-center justify-between">
+             <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center shadow-sm">
+                  <Crown className="w-3 h-3 text-white fill-white" />
+                </div>
+                <p className="text-[14px] font-bold text-gray-600">Free delivery above ₹99</p>
+             </div>
+             <button className="flex items-center gap-1 text-gray-400 font-bold hover:text-gray-600 transition-colors">
+               <span className="text-[13px]">4 offers</span>
+               <ChevronDown className="w-4 h-4 text-gray-400" />
+             </button>
+          </div>
+        </div>
 
         {/* Search Bar */}
-        <div className="relative mb-4">
-          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-            <Search className="w-5 h-5 text-gray-400" />
+        <div className="relative mb-5">
+          <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+            <Search className="w-4 h-4 text-gray-400" />
           </div>
           <input 
             type="text" 
             placeholder="Search for 'Biryani' or 'Starters'..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-gray-100 border-none rounded-xl py-3 pl-10 pr-4 text-sm font-medium focus:ring-2 focus:ring-rose-500"
+            className="w-full bg-gray-100 border border-gray-200/50 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all shadow-inner"
           />
         </div>
 
         {/* Categories */}
-        <div className="flex gap-3 overflow-x-auto no-scrollbar py-1">
+        <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-1 mb-2">
           {categories.map(cat => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={cn(
-                "px-4 py-1.5 rounded-lg border text-xs font-bold whitespace-nowrap transition-all",
+                "px-5 py-2.5 rounded-2xl border text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all",
                 activeCategory === cat 
-                  ? "bg-rose-50 border-rose-500 text-rose-600 shadow-sm" 
-                  : "bg-white border-gray-200 text-gray-600"
+                  ? "bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200" 
+                  : "bg-white border-gray-100 text-gray-500 hover:border-gray-200"
               )}
             >
               {cat}
             </button>
           ))}
         </div>
-      </header>
+      </div>
+
 
       {/* Menu List */}
-      <main className="px-4 py-6 space-y-8">
+      <main className="px-4 py-4 space-y-8">
         {categories.filter(c => c !== 'All').map(category => {
           const items = filteredItems.filter(i => i.category === category);
           if (items.length === 0) return null;

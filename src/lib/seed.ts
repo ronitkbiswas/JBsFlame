@@ -1,4 +1,4 @@
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, limit } from 'firebase/firestore';
 import { db, auth } from './firebase';
 
 const SAMPLE_DATA = [
@@ -66,7 +66,8 @@ export async function seedMenu() {
 
   try {
     const menuRef = collection(db, 'menu_items');
-    const snapshot = await getDocs(menuRef);
+    const q = query(menuRef, limit(1));
+    const snapshot = await getDocs(q);
     
     if (snapshot.empty) {
       console.log('Seeding menu data...');

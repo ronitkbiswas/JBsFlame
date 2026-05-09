@@ -70,7 +70,8 @@ export const OrderService = {
     const q = query(
       collection(db, 'orders'),
       where('userId', '==', auth.currentUser.uid),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
+      limit(20)
     );
 
     return onSnapshot(q, (snapshot) => {
@@ -80,7 +81,9 @@ export const OrderService = {
       })) as Order[];
       callback(orders);
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'orders');
+      if (auth.currentUser) {
+        handleFirestoreError(error, OperationType.GET, 'orders');
+      }
     });
   },
 
@@ -90,7 +93,7 @@ export const OrderService = {
   subscribeToAllOrders(callback: (orders: Order[]) => void) {
     if (!auth.currentUser) return () => {};
 
-    const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(100));
     return onSnapshot(q, (snapshot) => {
       const orders = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -98,7 +101,9 @@ export const OrderService = {
       })) as Order[];
       callback(orders);
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'orders');
+      if (auth.currentUser) {
+        handleFirestoreError(error, OperationType.GET, 'orders');
+      }
     });
   },
 
@@ -166,7 +171,7 @@ export const OrderService = {
    */
   async getAllOrders() {
     try {
-      const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(100));
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({
         id: doc.id,

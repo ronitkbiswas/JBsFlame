@@ -48,15 +48,19 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   throw new Error(jsonError);
 }
 
+let cachedLocation: RestaurantLocation | null = null;
+
 export const SettingsService = {
   async getRestaurantLocation(): Promise<RestaurantLocation | null> {
+    if (cachedLocation) return cachedLocation;
     try {
       const docRef = doc(db, SETTINGS_COLLECTION, RESTAURANT_DOC_ID);
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
         const data = docSnap.data();
-        return data.value as RestaurantLocation;
+        cachedLocation = data.value as RestaurantLocation;
+        return cachedLocation;
       }
       return null;
     } catch (error) {
@@ -73,6 +77,7 @@ export const SettingsService = {
         value: location,
         updatedAt: serverTimestamp()
       });
+      cachedLocation = location;
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `${SETTINGS_COLLECTION}/${RESTAURANT_DOC_ID}`);
     }

@@ -3,16 +3,17 @@ import { onSnapshot, query, collection, where, orderBy, limit } from 'firebase/f
 import { db, auth } from '../lib/firebase';
 import { Order, OrderStatus } from '../types';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
+import { User } from 'firebase/auth';
 
 interface NotificationManagerProps {
   isAdmin: boolean;
+  user: User | null;
 }
 
-export default function NotificationManager({ isAdmin }: NotificationManagerProps) {
+export default function NotificationManager({ isAdmin, user }: NotificationManagerProps) {
   const previousOrdersRef = useRef<Record<string, OrderStatus>>({});
   const lastNewOrderTimeRef = useRef<number>(Date.now());
   const isInitialLoadRef = useRef(true);
-  const authUser = auth.currentUser;
 
   useEffect(() => {
     // Request notification permission and register service worker on mount
@@ -30,7 +31,7 @@ export default function NotificationManager({ isAdmin }: NotificationManagerProp
   }, []);
 
   useEffect(() => {
-    if (!authUser) {
+    if (!user) {
       isInitialLoadRef.current = true;
       return;
     }
@@ -47,7 +48,7 @@ export default function NotificationManager({ isAdmin }: NotificationManagerProp
       // Customer listens to their own orders to detect STATUS changes
       q = query(
         collection(db, 'orders'),
-        where('userId', '==', authUser.uid),
+        where('userId', '==', user.uid),
         orderBy('createdAt', 'desc'),
         limit(10)
       );
@@ -105,14 +106,14 @@ export default function NotificationManager({ isAdmin }: NotificationManagerProp
 
       isInitialLoadRef.current = false;
     }, (error) => {
-      // Only report error if we are supposed to be able to read it
-      if (authUser) {
+      // Only report error if user is still logged in to avoid reporting transition errors
+      if (auth.currentUser) {
         handleFirestoreError(error, OperationType.GET, 'orders_notifications');
       }
     });
 
     return () => unsubscribe();
-  }, [isAdmin, authUser]);
+  }, [isAdmin, user]);
 
   const sendNotification = async (title: string, body: string) => {
     if (!('Notification' in window)) return;

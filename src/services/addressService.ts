@@ -129,7 +129,9 @@ export const AddressService = {
     const addressesRef = collection(db, 'users', userId, 'addresses');
     
     try {
-      const snapshot = await getDocs(addressesRef);
+      // Fetch only Home and Work addresses to check for duplicates
+      const q = query(addressesRef, where('type', 'in', ['Home', 'Work']));
+      const snapshot = await getDocs(q);
       
       if (snapshot.empty) return;
 
