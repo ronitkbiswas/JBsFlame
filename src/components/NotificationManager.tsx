@@ -106,6 +106,14 @@ export default function NotificationManager({ isAdmin, user }: NotificationManag
 
       isInitialLoadRef.current = false;
     }, (error) => {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isQuotaError = errorMessage.toLowerCase().includes('quota') || errorMessage.toLowerCase().includes('limit exceeded');
+      
+      if (isQuotaError) {
+        console.warn('Stopping NotificationManager listener due to quota limit.');
+        unsubscribe(); // Stop listening
+      }
+
       // Only report error if user is still logged in to avoid reporting transition errors
       if (auth.currentUser) {
         handleFirestoreError(error, OperationType.GET, 'orders_notifications');

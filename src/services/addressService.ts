@@ -22,15 +22,20 @@ export const AddressService = {
     const addressesRef = collection(db, 'users', auth.currentUser.uid, 'addresses');
     const q = query(addressesRef, orderBy('createdAt', 'desc'));
 
-    return onSnapshot(q, (snapshot) => {
+    let unsubscribe: () => void;
+    unsubscribe = onSnapshot(q, (snapshot) => {
       const addresses = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as SavedAddress[];
       callback(addresses);
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, `users/${auth.currentUser?.uid}/addresses`);
+      if (handleFirestoreError(error, OperationType.GET, `users/${auth.currentUser?.uid}/addresses`)) {
+        if (unsubscribe) unsubscribe();
+      }
     });
+
+    return () => unsubscribe && unsubscribe();
   },
 
   async saveAddress(data: { 

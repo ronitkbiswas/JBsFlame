@@ -26,9 +26,11 @@ export interface FirestoreErrorInfo {
   }
 }
 
-export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null): boolean {
+  const errorMessageText = error instanceof Error ? error.message : String(error);
+  
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errorMessageText,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -44,7 +46,14 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     path
   };
   
-  const errorMessage = JSON.stringify(errInfo);
-  console.error('Firestore Error Details:', errorMessage);
-  throw new Error(errorMessage);
+  const errorJson = JSON.stringify(errInfo);
+  console.error('Firestore Error Details:', errorJson);
+  
+  // If it's a quota error, don't throw to avoid crashing the app
+  if (errorMessageText.toLowerCase().includes('quota') || errorMessageText.toLowerCase().includes('limit exceeded') || errorMessageText.toLowerCase().includes('unavailable')) {
+    console.warn('Quota limit or connection issue - suppressing error to keep app stable.');
+    return true; // Is quota/connection error
+  }
+  
+  throw new Error(errorJson);
 }

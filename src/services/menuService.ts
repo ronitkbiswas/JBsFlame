@@ -51,15 +51,19 @@ export const MenuService = {
    */
   subscribeToMenu(callback: (items: MenuItem[]) => void) {
     const q = query(collection(db, 'menu_items'), orderBy('category'), orderBy('name'));
-    return onSnapshot(q, (snapshot) => {
+    let unsubscribe: () => void;
+    unsubscribe = onSnapshot(q, (snapshot) => {
       const items = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as MenuItem[];
       callback(items);
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'menu_items');
+      if (handleFirestoreError(error, OperationType.GET, 'menu_items')) {
+        if (unsubscribe) unsubscribe();
+      }
     });
+    return () => unsubscribe && unsubscribe();
   },
 
   /**

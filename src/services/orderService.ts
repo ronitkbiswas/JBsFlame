@@ -1,4 +1,4 @@
-import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, doc, updateDoc, onSnapshot, getDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, doc, updateDoc, onSnapshot, getDoc, deleteDoc, writeBatch, limit } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { Order, OrderStatus } from '../types';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
@@ -74,7 +74,8 @@ export const OrderService = {
       limit(20)
     );
 
-    return onSnapshot(q, (snapshot) => {
+    let unsubscribe: () => void;
+    unsubscribe = onSnapshot(q, (snapshot) => {
       const orders = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -82,9 +83,13 @@ export const OrderService = {
       callback(orders);
     }, (error) => {
       if (auth.currentUser) {
-        handleFirestoreError(error, OperationType.GET, 'orders');
+        if (handleFirestoreError(error, OperationType.GET, 'orders')) {
+          if (unsubscribe) unsubscribe();
+        }
       }
     });
+
+    return () => unsubscribe && unsubscribe();
   },
 
   /**
@@ -94,7 +99,8 @@ export const OrderService = {
     if (!auth.currentUser) return () => {};
 
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(100));
-    return onSnapshot(q, (snapshot) => {
+    let unsubscribe: () => void;
+    unsubscribe = onSnapshot(q, (snapshot) => {
       const orders = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -102,9 +108,13 @@ export const OrderService = {
       callback(orders);
     }, (error) => {
       if (auth.currentUser) {
-        handleFirestoreError(error, OperationType.GET, 'orders');
+        if (handleFirestoreError(error, OperationType.GET, 'orders')) {
+          if (unsubscribe) unsubscribe();
+        }
       }
     });
+
+    return () => unsubscribe && unsubscribe();
   },
 
   /**
