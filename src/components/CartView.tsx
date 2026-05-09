@@ -157,7 +157,7 @@ export default function CartView({ items, onUpdateQuantity, onCheckout, onClearC
                     "w-full h-14 rounded-2xl font-bold text-lg shadow-xl transition-all active:scale-95",
                     hasActiveOrder 
                       ? "bg-gray-200 text-gray-400 shadow-none cursor-not-allowed" 
-                      : "bg-rose-600 text-white shadow-rose-200 focus:ring-4 focus:ring-rose-200"
+                      : "bg-emerald-600 text-white shadow-emerald-200 focus:ring-4 focus:ring-emerald-200"
                   )}
                 >
                   {hasActiveOrder ? 'Active Order in Progress' : `Place Order • ${formatPrice(total)}`}

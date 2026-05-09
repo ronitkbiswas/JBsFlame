@@ -573,10 +573,10 @@ useEffect(() => {
                         
                         <div className="absolute top-[88px] z-10 w-28">
                            {cartItem ? (
-                             <div className="bg-white text-rose-600 font-bold border-2 border-rose-50 rounded-xl shadow-xl flex items-center overflow-hidden w-full justify-between h-10">
+                             <div className="bg-white text-emerald-600 font-bold border-2 border-emerald-50 rounded-xl shadow-xl flex items-center overflow-hidden w-full justify-between h-10">
                                <button 
                                  onClick={() => updateQuantity(item.id, -1)}
-                                 className="p-1 px-2 hover:bg-rose-50 transition-colors h-full flex items-center"
+                                 className="p-1 px-2 hover:bg-emerald-50 transition-colors h-full flex items-center"
                                >
                                  <Minus className="w-3 h-3 stroke-[4]" />
                                </button>
@@ -591,10 +591,10 @@ useEffect(() => {
                            ) : (
                              <button 
                               onClick={() => addToCart(item)}
-                              className="w-full bg-white text-rose-500 font-black border-2 border-rose-100 h-10 rounded-xl shadow-xl active:scale-95 transition-all text-sm flex items-center justify-between px-3"
+                              className="w-full bg-white text-emerald-600 font-black border-2 border-emerald-100 h-10 rounded-xl shadow-xl active:scale-95 transition-all text-sm flex items-center justify-between px-3"
                              >
                                <span className="flex-1 text-center ml-2">ADD</span>
-                               <Plus className="w-3.5 h-3.5 stroke-[4] text-rose-400" />
+                               <Plus className="w-3.5 h-3.5 stroke-[4] text-emerald-400" />
                              </button>
                            )}
                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest text-center mt-2.5">customisable</p>
@@ -1118,6 +1118,7 @@ useEffect(() => {
                       if (status === 'Pending') return <Timer className="w-8 h-8" />;
                       if (status === 'Accepted') return <CheckCircle2 className="w-8 h-8" />;
                       if (status === 'Preparing') return <ChefHat className="w-8 h-8" />;
+                      if (status === 'Ready') return <CheckCircle2 className="w-8 h-8 text-emerald-500" />;
                       if (status === 'Out for Delivery') return <Bike className="w-8 h-8" />;
                       return <Timer className="w-8 h-8" />;
                     })()}
@@ -1129,6 +1130,7 @@ useEffect(() => {
                      {currentTrackingOrder.status === 'Pending' ? 'Order Placed' : 
                       currentTrackingOrder.status === 'Accepted' ? 'Confirmed' :
                       currentTrackingOrder.status === 'Preparing' ? 'In Kitchen' :
+                      currentTrackingOrder.status === 'Ready' ? 'Ready' :
                       currentTrackingOrder.status === 'Out for Delivery' ? 'Out for delivery' : 
                       currentTrackingOrder.status === 'Delivered' ? 'Delivered' :
                       currentTrackingOrder.status === 'Cancelled' ? 'Cancelled' :
@@ -1138,6 +1140,7 @@ useEffect(() => {
                      {currentTrackingOrder.status === 'Pending' && 'We are waiting for the restaurant to confirm.'}
                      {currentTrackingOrder.status === 'Accepted' && 'Restaurant has confirmed your order.'}
                      {currentTrackingOrder.status === 'Preparing' && 'Your food is being prepared with love.'}
+                     {currentTrackingOrder.status === 'Ready' && 'Your food is ready, Looking for a delivery partner'}
                      {currentTrackingOrder.status === 'Out for Delivery' && 'Our rider is bringing your food hot!'}
                      {currentTrackingOrder.status === 'Delivered' && 'Hope you enjoyed your meal!'}
                      {currentTrackingOrder.status === 'Cancelled' && 'This order was cancelled.'}
@@ -1203,7 +1206,7 @@ useEffect(() => {
                          </div>
                        ))}
                      </div>
-                     <div className="pt-2 mt-2 border-t border-dashed flex justify-between items-center text-rose-600">
+                     <div className="pt-2 mt-2 border-t border-dashed flex justify-between items-center text-gray-900">
                         <span className="font-bold">Total Bill</span>
                         <span className="text-lg font-black">{formatPrice(currentTrackingOrder.total)}</span>
                      </div>
@@ -1407,7 +1410,7 @@ function MapBoundsAdjuster({ pos1, pos2 }: { pos1: { lat: number; lng: number },
     const bounds = new google.maps.LatLngBounds();
     bounds.extend(pos1);
     bounds.extend(pos2);
-    map.fitBounds(bounds, { top: 15, bottom: 15, left: 15, right: 15 });
+    map.fitBounds(bounds, { top: 30, bottom: 30, left: 30, right: 30 });
   }, [map, pos1.lat, pos1.lng, pos2.lat, pos2.lng]);
 
   return null;
