@@ -328,12 +328,14 @@ useEffect(() => {
            d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   };
 
-  const headerDeliveryTime = Math.max(8, Math.round(12 + (getDistanceInKm(
-    restaurantLocation.lat, 
-    restaurantLocation.lng, 
-    location.lat, 
-    location.lng
-  ) * 5)));
+  const headerDeliveryTime = (!user || !hasUserDetectedLocation) 
+    ? 29 
+    : Math.max(8, Math.round(12 + (getDistanceInKm(
+        restaurantLocation.lat, 
+        restaurantLocation.lng, 
+        location.lat, 
+        location.lng
+      ) * 5)));
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -569,7 +571,7 @@ useEffect(() => {
                            />
                         </div>
                         
-                        <div className="absolute top-[88px] z-10 w-24">
+                        <div className="absolute top-[88px] z-10 w-28">
                            {cartItem ? (
                              <div className="bg-white text-rose-600 font-bold border-2 border-rose-50 rounded-xl shadow-xl flex items-center overflow-hidden w-full justify-between h-10">
                                <button 
