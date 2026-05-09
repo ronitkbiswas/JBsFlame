@@ -19,9 +19,9 @@ export default function CartView({ items, onUpdateQuantity, onCheckout, onClearC
   const [showClearConfirm, setShowClearConfirm] = React.useState(false);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const deliveryFee = subtotal > 0 ? 40 : 0;
+  const deliveryFee = 0;
   const taxes = subtotal * 0.05;
-  const total = subtotal + deliveryFee + taxes;
+  const total = subtotal + taxes;
 
   if (totalItems === 0) return null;
 
@@ -134,8 +134,32 @@ export default function CartView({ items, onUpdateQuantity, onCheckout, onClearC
                     <span>{formatPrice(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-gray-600">
+                    <span>Packaging Charge</span>
+                    <div className="flex items-center gap-2">
+                      <span className="line-through text-gray-400">{formatPrice(25)}</span>
+                      <span>{formatPrice(0)}</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Platform Fee</span>
+                    <div className="flex items-center gap-2">
+                      <span className="line-through text-gray-400">{formatPrice(5)}</span>
+                      <span>{formatPrice(0)}</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Surge Fee</span>
+                    <div className="flex items-center gap-2">
+                      <span className="line-through text-gray-400">{formatPrice(10)}</span>
+                      <span>{formatPrice(0)}</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-600">
                     <span>Delivery Fee</span>
-                    <span>{formatPrice(deliveryFee)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="line-through text-gray-400">{formatPrice(40)}</span>
+                      <span>{formatPrice(0)}</span>
+                    </div>
                   </div>
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Taxes (5% GST)</span>
