@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "App user profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["customer", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "MenuItem": {
+      "title": "Menu Item",
+      "description": "Restaurant menu item",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "available": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "price", "category"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Food order record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "items": { "type": "array" },
+        "status": { "type": "string", "enum": ["Pending", "Accepted", "Preparing", "Out for Delivery", "Delivered", "Cancelled"] },
+        "cancellationRequested": { "type": "boolean" },
+        "total": { "type": "number" },
+        "address": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "items", "status", "total", "address"]
+    },
+    "SavedAddress": {
+      "title": "Saved Address",
+      "description": "User's saved delivery location",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "label": { "type": "string" },
+        "addressText": { "type": "string" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "type": { "type": "string", "enum": ["Home", "Work", "Other"] },
+        "isDefault": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "label", "lat", "lng", "type"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "Global application configuration",
+      "type": "object",
+      "properties": {
+        "key": { "type": "string" },
+        "value": { "type": "object" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["key", "value"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "users/{userId}/addresses/{addressId}": {
+      "schema": "SavedAddress",
+      "description": "User's saved delivery addresses"
+    },
+    "menu_items/{itemId}": {
+      "schema": "MenuItem",
+      "description": "Food items on the menu"
+    },
+    "orders/{orderId}": {
+      "schema": "Order",
+      "description": "Food orders across the platform"
+    },
+    "settings/{settingId}": {
+      "schema": "Setting",
+      "description": "Global application settings like restaurant location"
+    }
+  }
+}
