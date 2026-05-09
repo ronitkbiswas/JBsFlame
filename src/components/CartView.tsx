@@ -182,16 +182,33 @@ export default function CartView({ items, onUpdateQuantity, onCheckout, onClearC
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-start gap-3"
+                  className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-start gap-3 relative overflow-hidden group"
                 >
-                  <div className="bg-emerald-500 p-1.5 rounded-lg shrink-0 mt-0.5">
+                  <motion.div 
+                    animate={{ 
+                      x: ['-100%', '200%'],
+                    }}
+                    transition={{ 
+                      repeat: Infinity, 
+                      duration: 3, 
+                      ease: "linear",
+                      repeatDelay: 2
+                    }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12"
+                  />
+                  <div className="bg-emerald-500 p-1.5 rounded-lg shrink-0 mt-0.5 relative z-10 shadow-lg shadow-emerald-100">
                     <Zap className="w-4 h-4 text-white fill-white" />
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-emerald-900">
-                      You're Saving {formatPrice(waivedFees)}
-                    </h4>
-                    <p className="text-xs text-emerald-700/80 leading-relaxed mt-1">
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-emerald-900">
+                        You're Saving {formatPrice(waivedFees)}
+                      </h4>
+                      <span className="text-[10px] font-black bg-emerald-200 text-emerald-700 px-1.5 py-0.5 rounded uppercase tracking-tighter animate-pulse">
+                        Smart Choice
+                      </span>
+                    </div>
+                    <p className="text-xs text-emerald-700 font-medium leading-relaxed mt-1">
                       Ordering directly allows you to avoid the additional platform markups and service fees typically charged by apps like Zomato or Swiggy.
                     </p>
                   </div>
