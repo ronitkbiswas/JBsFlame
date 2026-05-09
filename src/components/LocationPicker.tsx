@@ -8,10 +8,10 @@ import { AddressType, SavedAddress, UserProfile } from '../types';
 import { auth } from '../lib/firebase';
 
 const API_KEY =
-  process.env.GOOGLE_MAPS_PLATFORM_KEY ||
-  process.env.GOOGLE_MAPS_API_KEY ||
   (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
   (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY ||
+  process.env.GOOGLE_MAPS_PLATFORM_KEY ||
+  process.env.GOOGLE_MAPS_API_KEY ||
   '';
 const hasValidKey = Boolean(API_KEY) && API_KEY.length > 10;
 

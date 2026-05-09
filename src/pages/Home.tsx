@@ -69,10 +69,10 @@ const getItemRating = (id: string) => {
   return { rating, count, isHighlyReordered, reorderLevel, isBestseller };
 };
 const API_KEY =
-  process.env.GOOGLE_MAPS_PLATFORM_KEY ||
-  process.env.GOOGLE_MAPS_API_KEY ||
   (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
   (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY ||
+  process.env.GOOGLE_MAPS_PLATFORM_KEY ||
+  process.env.GOOGLE_MAPS_API_KEY ||
   '';
 
 export default function Home() {
