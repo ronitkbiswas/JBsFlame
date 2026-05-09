@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 // Tracking Path Added
-import { Search, MapPin, History, User, LogOut, Plus, Minus, Star, ArrowRight, X, LayoutDashboard, Bike, Timer, Package, CheckCircle2, AlertCircle, Navigation, Phone, Store, ChefHat, Soup, Check, Settings, ClipboardList, UserCircle, ChevronDown, Zap } from 'lucide-react';
+import { Search, MapPin, History, User, LogOut, Plus, Minus, Star, ArrowRight, X, LayoutDashboard, Bike, Timer, Package, CheckCircle2, AlertCircle, Navigation, Phone, Store, ChefHat, Soup, Check, Settings, ClipboardList, UserCircle, ChevronDown, Zap, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MenuItem, CartItem, UserProfile } from '../types';
 import { MenuService } from '../services/menuService';
@@ -191,6 +191,7 @@ useEffect(() => {
     setCart(prev => {
       const existing = prev.find(i => i.id === item.id);
       if (existing) {
+        if (existing.quantity >= 5) return prev;
         return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
       }
       return [...prev, { ...item, quantity: 1 }];
@@ -202,6 +203,7 @@ useEffect(() => {
       return prev.map(i => {
         if (i.id === id) {
           const q = Math.max(0, i.quantity + delta);
+          if (q > 5) return i;
           return q === 0 ? null : { ...i, quantity: q };
         }
         return i;
@@ -583,7 +585,8 @@ useEffect(() => {
                                <span className="text-sm font-black">{cartItem.quantity}</span>
                                <button 
                                  onClick={() => updateQuantity(item.id, 1)}
-                                 className="p-1 px-2 hover:bg-rose-50 transition-colors h-full flex items-center"
+                                 disabled={cartItem.quantity >= 5}
+                                 className="p-1 px-2 hover:bg-rose-50 transition-colors h-full flex items-center disabled:opacity-30 disabled:cursor-not-allowed"
                                >
                                  <Plus className="w-3 h-3 stroke-[4]" />
                                </button>
@@ -1112,7 +1115,10 @@ useEffect(() => {
                    </div>
                  )}
 
-                 <div className="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                 <div className={cn(
+                    "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2",
+                    ['Cancelled', 'Rejected'].includes(currentTrackingOrder.status) ? "bg-rose-50 text-rose-600" : "bg-green-50 text-green-600"
+                  )}>
                     {(() => {
                       const status = currentTrackingOrder.status;
                       if (status === 'Pending') return <Timer className="w-8 h-8" />;
@@ -1120,6 +1126,7 @@ useEffect(() => {
                       if (status === 'Preparing') return <ChefHat className="w-8 h-8" />;
                       if (status === 'Ready') return <CheckCircle2 className="w-8 h-8 text-emerald-500" />;
                       if (status === 'Out for Delivery') return <Bike className="w-8 h-8" />;
+                      if (status === 'Cancelled' || status === 'Rejected') return <XCircle className="w-8 h-8" />;
                       return <Timer className="w-8 h-8" />;
                     })()}
                  </div>
@@ -1143,7 +1150,7 @@ useEffect(() => {
                      {currentTrackingOrder.status === 'Ready' && 'Your food is ready, Looking for a delivery partner'}
                      {currentTrackingOrder.status === 'Out for Delivery' && 'Our rider is bringing your food hot!'}
                      {currentTrackingOrder.status === 'Delivered' && 'Hope you enjoyed your meal!'}
-                     {currentTrackingOrder.status === 'Cancelled' && 'This order was cancelled.'}
+                     {currentTrackingOrder.status === 'Cancelled' && 'Sorry. This order was cancelled :( '}
                      {currentTrackingOrder.status === 'Rejected' && 'The restaurant could not fulfill this order.'}
                    </p>
                  </div>

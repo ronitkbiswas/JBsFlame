@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, ChevronUp, ChevronRight, Minus, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { ShoppingBag, ChevronUp, ChevronRight, Minus, Plus, Trash2, AlertCircle, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CartItem } from '../types';
 import { formatPrice, cn } from '../lib/utils';
@@ -22,6 +22,8 @@ export default function CartView({ items, onUpdateQuantity, onCheckout, onClearC
   const deliveryFee = 0;
   const taxes = subtotal * 0.05;
   const total = subtotal + taxes;
+  const waivedFees = 25 + 5 + 10 + 40;
+  const totalWithFees = total + waivedFees;
 
   if (totalItems === 0) return null;
 
@@ -119,7 +121,8 @@ export default function CartView({ items, onUpdateQuantity, onCheckout, onClearC
                         <span className="text-sm font-bold w-4 text-center">{item.quantity}</span>
                         <button 
                           onClick={(e) => { e.stopPropagation(); onUpdateQuantity(item.id, 1); }}
-                          className="w-7 h-7 flex items-center justify-center text-rose-600 font-bold hover:bg-rose-100 rounded transition-colors"
+                          disabled={item.quantity >= 5}
+                          className="w-7 h-7 flex items-center justify-center text-rose-600 font-bold hover:bg-rose-100 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           <Plus className="w-3.5 h-3.5 stroke-[3]" />
                         </button>
@@ -168,9 +171,31 @@ export default function CartView({ items, onUpdateQuantity, onCheckout, onClearC
                   <div className="h-px bg-gray-200 my-2" />
                   <div className="flex justify-between text-lg font-bold text-gray-900">
                     <span>Grand Total</span>
-                    <span>{formatPrice(total)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="line-through text-gray-400 text-sm">{formatPrice(totalWithFees)}</span>
+                      <span>{formatPrice(total)}</span>
+                    </div>
                   </div>
                 </div>
+
+                {/* Savings Banner */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-start gap-3"
+                >
+                  <div className="bg-emerald-500 p-1.5 rounded-lg shrink-0 mt-0.5">
+                    <Zap className="w-4 h-4 text-white fill-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-emerald-900">
+                      You're Saving {formatPrice(waivedFees)}
+                    </h4>
+                    <p className="text-xs text-emerald-700/80 leading-relaxed mt-1">
+                      Ordering directly allows you to avoid the additional platform markups and service fees typically charged by apps like Zomato or Swiggy.
+                    </p>
+                  </div>
+                </motion.div>
               </div>
 
               <div className="p-6 bg-white border-t sticky bottom-0">
